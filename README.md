@@ -7,10 +7,10 @@ Requirements:
 ------------
 * Python
 * PyGI (PyGObject Introspection)
-* GTK
+ * GTK
 * pyScanLib
-* - SANE (Linux)
-* - TWAIN (Win32)
+ * SANE (Linux)
+ * TWAIN (Win32)
 
 
 Features:
