@@ -16,3 +16,5 @@ Requirements:
 Features:
 ----------
 * Auto Scanning
+* Selected Area Scanning
+* Multi Platform (Windows, Linux)
