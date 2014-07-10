@@ -9,11 +9,19 @@ import logging
 # PROBLEMS TO SOLVE
 # - sanitize if input size is greater than scanner limit in scanAreaOkButton()
 
+
 class autoScanner:
 
     def __init__(self):
-        logging.basicConfig(level=logging.INFO)
-        self.log = logging.getLogger(__name__)
+
+        self.log = logging.getLogger('autoScanner')
+        os.remove('includes/autoScanner.log')
+        handler = logging.FileHandler('includes/autoScanner.log')
+        formatter = logging.Formatter(
+            '%(asctime)s %(thread)d %(lineno)d %(levelname)s %(message)s')
+        handler.setFormatter(formatter)
+        self.log.addHandler(handler)
+        self.log.setLevel(logging.DEBUG)
         self.log.info('autoScanner Initializing')
 
         self.scanFileName = "Scan"

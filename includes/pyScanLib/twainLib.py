@@ -1,4 +1,4 @@
-import twain
+from libs import twain
 import Image
 from StringIO import StringIO
 
