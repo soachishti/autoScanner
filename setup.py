@@ -57,6 +57,7 @@ for lib in gtkLibs:
     includeFiles.append((os.path.join(includeDllPath, lib), lib))
 
 includeFiles.append(("includes"))
+includeFiles.append(("LICENSE"))
 
 base = None
 if sys.platform == "win32":
@@ -76,6 +77,7 @@ setup(
     }},
     executables=[
         Executable(script = "autoScanner.py",
+                    icon = "includes\\icon.ico",
                    base=base
                    )
     ]
