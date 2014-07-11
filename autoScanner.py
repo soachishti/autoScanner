@@ -62,16 +62,16 @@ class autoScanner:
 
         # Creating Default folder for scanned files
         if sys.platform == "win32":
-            defaultDirectory = os.getenv(
+            self.directory = os.getenv(
                 "HOMEDRIVE") + os.getenv("HOMEPATH") + "\\Desktop\\ScannedFiles\\"
         else:
-            defaultDirectory = "/home/ScanFiles/"
-
-        if not os.path.exists(defaultDirectory):
-            os.makedirs(defaultDirectory)
-        self.directoryChooser.set_current_folder(defaultDirectory)
-        # Directory created
-
+            self.directory = "/home/ScanFiles/"
+            
+        # This line wont work because directory doesn't created
+        self.directoryChooser.set_current_folder(self.directory)
+        
+        self.log.info("Default Directory set to %s",self.directory)
+           
         self.treeView.set_visible(False)
         self.log.info('Widget Binded')
 
@@ -110,6 +110,13 @@ class autoScanner:
                 self.log.info('Scanned image location set')
                 self.directory = self.directory[8:] + "/"
                 self.directory = self.directory.replace("\\", "/")
+                
+                if not os.path.exists(self.directory):
+                    os.makedirs(self.directory)
+                self.directoryChooser.set_current_folder(self.directory)
+                # Block selected of scanners
+                self.directoryChooser.set_sensitive(False)
+                                
                 self.treeView.set_visible(True)
 
                 self.log.info('Treeview visible')
@@ -394,35 +401,49 @@ class autoScanner:
     def loadScanner(self):
         """Load Scanner and add them to Scanners combox Box (scannerListBox)
         """
+        
+        buttonText = self.loadScannerButton.get_label()
+        GObject.idle_add(self.loadScannerButton.set_sensitive, False)
+        GObject.idle_add(self.loadScannerButton.set_label, "Loading Scanner(s)...")
+
+        
         self.log.info("Loading Scanner")
         if len(self.scannerList) == 0:
             self.loadScanLib = pyScanLib()
             scanners = self.loadScanLib.getScanners()
 
-            if scanners:
+            if scanners:    
                 self.scannerListBox.remove(0)
-            for scanner in scanners:
-                self.scannerListBox.append_text(scanner)
-                self.scannerList[scanner] = scanner
-
-            noOfScanner = len(scanners)
-            if noOfScanner > 0:
-                self.scannerListBox.set_active(0)
-
-        # Selected first scanner available and get its size and save it to self.scannerSize
-        # then close the scanner
-        #
-        # This is needed for 'Custom' window default values (width and height)
-        self.log.info("Receving scanner size")
-        activeScanner = self.scannerListBox.get_active_text()
-        if activeScanner != None:
-            self.loadScanLib.setScanner(activeScanner)
-            self.scannerSize = self.loadScanLib.getScannerSize()[0]
-            self.loadScanLib.closeScanner()
-            self.log.info("Scanner Size Received")
-            self.log.info("Current Scanner instance destroyed")
-        else:
-            self.log.info("Scanner Size couldn't be received")
+                for scanner in scanners:
+                    self.scannerListBox.append_text(scanner)
+                    self.scannerList[scanner] = scanner
+                
+                noOfScanner = len(scanners)
+                if noOfScanner > 0:
+                    self.scannerListBox.set_active(0)
+                    
+                # Selected first scanner available and get its size and save it to self.scannerSize
+                # then close the scanner
+                #
+                # This is needed for 'Custom' window default values (width and height)
+                self.log.info("Receving scanner size")
+                activeScanner = self.scannerListBox.get_active_text()
+                if activeScanner != None:
+                    self.loadScanLib.setScanner(activeScanner)
+                    self.scannerSize = self.loadScanLib.getScannerSize()[0]
+                    self.loadScanLib.closeScanner()
+                    self.log.info("Scanner Size Received")
+                    self.log.info("Current Scanner instance destroyed")
+                else:
+                    self.log.info("Scanner Size couldn't be received")
+            
+            else:
+                self.loadScanLib.errorMsg
+        
+        GObject.idle_add(self.loadScannerButton.set_label, buttonText)
+        GObject.idle_add(self.loadScannerButton.set_sensitive, True)
+        
+        
 
     def dialogBox(self, message, explanation=""):
         """Create dailog box and show 'message' given in parameter

@@ -1,44 +1,9 @@
-2014-07-11 01:30:24,165 INFO autoScanner Initializing
-2014-07-11 01:30:24,428 INFO GUI loaded
-2014-07-11 01:30:24,431 INFO Widget Binded
-2014-07-11 01:30:24,433 INFO autoScanner Initialized
-2014-07-11 01:30:24,433 INFO Loading Scanner
-2014-07-11 01:30:24,549 INFO Receving scanner size
-2014-07-11 01:30:26,486 INFO Scanner Size Received
-2014-07-11 01:30:26,486 INFO Current Scanner instance destroyed
-2014-07-11 01:30:37,049 INFO Loading Scanner
-2014-07-11 01:30:37,049 INFO Receving scanner size
-2014-07-11 01:30:38,963 INFO Scanner Size Received
-2014-07-11 01:30:38,963 INFO Current Scanner instance destroyed
-2014-07-11 01:30:49,654 INFO Program Terminated
-2014-07-11 01:32:08,068 3716 23 INFO autoScanner Initializing
-2014-07-11 01:32:08,331 3716 39 INFO GUI loaded
-2014-07-11 01:32:08,334 3716 74 INFO Widget Binded
-2014-07-11 01:32:08,335 3640 395 INFO Loading Scanner
-2014-07-11 01:32:08,339 3716 89 INFO autoScanner Initialized
-2014-07-11 01:32:08,451 3640 414 INFO Receving scanner size
-2014-07-11 01:32:10,299 3640 420 INFO Scanner Size Received
-2014-07-11 01:32:10,299 3640 421 INFO Current Scanner instance destroyed
-2014-07-11 01:32:20,585 3716 95 INFO scanFunc Called
-2014-07-11 01:32:20,585 3716 103 INFO Scanners are available
-2014-07-11 01:32:20,585 3716 108 INFO Scanned image location set
-2014-07-11 01:32:20,586 3716 113 INFO Treeview visible
-2014-07-11 01:32:20,586 3204 136 INFO startScanning function called
-2014-07-11 01:32:20,586 3716 122 INFO Scanning thread started
-2014-07-11 01:32:20,588 3204 140 WARNING Going in infinite loop
-2014-07-11 01:32:20,588 3204 155 INFO Initializing Again
-2014-07-11 01:32:22,908 3204 179 INFO Scanning selected area
-2014-07-11 01:32:22,951 3204 222 INFO Scanning started ID = 1
-2014-07-11 01:32:37,871 3204 224 INFO Scanning #1 finished
-2014-07-11 01:32:37,915 3204 232 INFO Scanned Image Saved
-2014-07-11 01:32:37,915 3204 241 INFO Time Delay
-2014-07-11 01:32:38,915 3204 155 INFO Initializing Again
-2014-07-11 01:32:40,757 3204 179 INFO Scanning selected area
-2014-07-11 01:32:40,828 3204 222 INFO Scanning started ID = 2
-2014-07-11 01:32:55,188 3204 224 INFO Scanning #2 finished
-2014-07-11 01:32:55,234 3204 232 INFO Scanned Image Saved
-2014-07-11 01:32:55,236 3204 241 INFO Time Delay
-2014-07-11 01:32:56,236 3204 155 INFO Initializing Again
-2014-07-11 01:32:58,036 3204 179 INFO Scanning selected area
-2014-07-11 01:32:58,081 3204 222 INFO Scanning started ID = 3
-2014-07-11 01:33:00,148 3716 438 INFO Program Terminated
+2014-07-11 20:46:31,772 4472 25 INFO autoScanner Initializing
+2014-07-11 20:46:32,039 4472 41 INFO GUI loaded
+2014-07-11 20:46:32,042 4472 73 INFO Default Directory set to C:\Users\SNAREO\Desktop\ScannedFiles\
+2014-07-11 20:46:32,042 4472 76 INFO Widget Binded
+2014-07-11 20:46:32,043 4472 91 INFO autoScanner Initialized
+2014-07-11 20:46:32,043 4528 410 INFO Loading Scanner
+2014-07-11 20:46:34,528 4528 429 INFO Receving scanner size
+2014-07-11 20:46:36,861 4528 435 INFO Scanner Size Received
+2014-07-11 20:46:36,861 4528 436 INFO Current Scanner instance destroyed

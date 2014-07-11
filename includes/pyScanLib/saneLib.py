@@ -6,6 +6,7 @@ import sane
 #	License:    BSD 2-Clause License
 #======================================================================
 
+
 class saneLib(object):
 
     """The is main class of SANE API (Linux)
@@ -20,8 +21,22 @@ class saneLib(object):
         """
         sane.init()
         devices = sane.get_devices()[0]
-        if len(devices) > 0:
-            return devices
+
+        scannerList = []
+        for index, scannerName in enumerate(device):
+            try:
+                # Checking whether scanner is connected
+                # Other would be working if first on is fine
+                if index == 0:
+                    scanner = sane.open(scannerName)
+                    scanner.close()
+                scannerList.append(scannerName)
+            except Exception as e:
+                # Scanner not connected but driver installed
+                self.info = "Driver Installed but scanner not connected try restarting"
+
+        if scannerList:
+            return scannerList
         else:
             return None
 

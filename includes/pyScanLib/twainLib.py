@@ -1,5 +1,6 @@
 from libs import twain
 import Image
+import sys
 from StringIO import StringIO
 
 #======================================================================
@@ -8,6 +9,7 @@ from StringIO import StringIO
 #	License:    BSD 2-Clause License
 #======================================================================
 
+
 class twainLib(object):
 
     """The is main class of Twain API (Win32)
@@ -15,14 +17,27 @@ class twainLib(object):
 
     def __init__(self):
         self.dpi = 200  # Define for use in pixeltoInch function
+        self.sourceManager = twain.SourceManager(0)  # Initializing Twain API
 
     def getScanners(self):
         """Get available scanner from twain module
         """
-        self.sourceManager = twain.SourceManager(0)
         scanners = self.sourceManager.GetSourceList()
-        if scanners:
-            return scanners
+        scannerList = []
+        for index, scannerName in enumerate(scanners):
+            try:
+                # Checking whether scanner is connected
+                # Other would be working if first on is fine
+                if index == 0:
+                    scanner = self.sourceManager.OpenSource(scannerName)
+                    scanner.destroy()
+                scannerList.append(scannerName)
+            except Exception as e:
+                # Scanner not connected but driver installed
+                self.errorMsg = "Driver Installed but scanner not connected try restarting"
+
+        if scannerList:
+            return scannerList
         else:
             return None
 
@@ -85,7 +100,7 @@ class twainLib(object):
     def scan(self):
         """Scan and return PIL object if success else return False
         """
-        self.scanner.RequestAcquire(0, 1)
+        self.scanner.RequestAcquire(0, 0)
         info = self.scanner.GetImageInfo()
         try:
             self.handle = self.scanner.XferImageNatively()[0]
