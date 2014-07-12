@@ -1,5 +1,7 @@
 from libs import twain
 import Image
+import threading
+import time
 import sys
 from StringIO import StringIO
 
@@ -97,13 +99,15 @@ class twainLib(object):
         self.scanner.SetCapability(
             twain.ICAP_PIXELTYPE, twain.TWTY_UINT16, pixelType)
 
+    def acquireRequest(self):
+        self.scanner.RequestAcquire(0,0)
+    
     def scan(self):
         """Scan and return PIL object if success else return False
         """
-        self.scanner.RequestAcquire(0, 0)
-        info = self.scanner.GetImageInfo()
+        self.acquireRequest()
         try:
-            self.handle = self.scanner.XferImageNatively()[0]
+            (self.handle,self.pending) = self.scanner.XferImageNatively()
             image = twain.DIBToBMFile(self.handle)
             twain.GlobalHandleFree(self.handle)
             return Image.open(StringIO(image))
@@ -121,6 +125,13 @@ class twainLib(object):
         """Pray for this function ;)
         """
         raise NotImplementedError
+        
+        if self.handle:
+            image = twain.GlobalHandleGetBytes(self.handle,0,512)
+            previewImage = Image.open(StringIO(image))
+        else:
+            previewImage = Image.open()
+        return previewImage
 
     def close(self):
         """

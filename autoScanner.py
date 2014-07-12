@@ -1,10 +1,13 @@
-from gi.repository import Gtk, Gdk, GLib, GObject
+from gi.repository import Gtk, GObject
 from includes.pyScanLib import pyScanLib
 import time
 import os
 import threading
 import sys
 import logging
+import tesseract
+
+GObject.threads_init()
 
 # PROBLEMS TO SOLVE
 # - sanitize if input size is greater than scanner limit in scanAreaOkButton()
@@ -24,6 +27,8 @@ class autoScanner:
         self.log.setLevel(logging.DEBUG)
         self.log.info('autoScanner Initializing')
 
+        self.listStoreCounter = 0
+        self.counter = 1
         self.scanFileName = "Scan"
         self.scannerList = {}
         self.scanning = False
@@ -57,6 +62,8 @@ class autoScanner:
         self.directoryChooser = self.builder.get_object("directoryLocPath")
         self.loadScannerButton = self.builder.get_object("loadScanner")
         self.scanButton = self.builder.get_object("scan")
+        self.createOCRCheckBox = self.builder.get_object("createOCRCheckBox")
+        self.rotateDataBox = self.builder.get_object("rotateDataBox")
 
         self.delayValue.changed()
 
@@ -66,12 +73,12 @@ class autoScanner:
                 "HOMEDRIVE") + os.getenv("HOMEPATH") + "\\Desktop\\ScannedFiles\\"
         else:
             self.directory = "/home/ScanFiles/"
-            
+
         # This line wont work because directory doesn't created
         self.directoryChooser.set_current_folder(self.directory)
-        
-        self.log.info("Default Directory set to %s",self.directory)
-           
+
+        self.log.info("Default Directory set to %s", self.directory)
+
         self.treeView.set_visible(False)
         self.log.info('Widget Binded')
 
@@ -81,6 +88,7 @@ class autoScanner:
         self.resolutionInput.set_active(2)
         self.imageTypeInput.set_active(0)
         self.outputType.set_active(0)
+        self.rotateDataBox.set_active(0)
         self.infoBox.clear()
 
         # loading scanners
@@ -110,23 +118,22 @@ class autoScanner:
                 self.log.info('Scanned image location set')
                 self.directory = self.directory[8:] + "/"
                 self.directory = self.directory.replace("\\", "/")
-                
+
                 if not os.path.exists(self.directory):
                     os.makedirs(self.directory)
+
                 self.directoryChooser.set_current_folder(self.directory)
                 # Block selected of scanners
                 self.directoryChooser.set_sensitive(False)
-                                
+
                 self.treeView.set_visible(True)
 
                 self.log.info('Treeview visible')
 
                 # Start scanning from another thread
-                Gdk.threads_enter()
                 scanningThread = threading.Thread(target=self.startScanning)
                 scanningThread.daemon = True
                 scanningThread.start()
-                Gdk.threads_leave()
 
                 self.log.info('Scanning thread started')
             else:
@@ -143,9 +150,8 @@ class autoScanner:
         """This is main function for handling runtime scanning 
         """
         self.log.info('startScanning function called')
-        counter = 1
+
         self.iter = None
-        listStoreCounter = 0
         self.log.warning("Going in infinite loop")
 
         while True:
@@ -154,7 +160,7 @@ class autoScanner:
                 # Stop to notify scanning is paused
                 self.log.info('Scanning Paused')
                 GObject.idle_add(
-                    self.addRow, [counter, "", "Scanning Paused"])
+                    self.addRow, [self.counter, "", "Scanning Paused"])
                 GObject.idle_add(self.statusLabel.set_text, "Scanning Paused")
 
             # wait until scanning is paused
@@ -168,26 +174,33 @@ class autoScanner:
             # get scanner from GUI and set it for use
             activeScanner = self.scannerListBox.get_active_text()
             self.loadScanLib.setScanner(activeScanner)
+            self.scannerSize = self.loadScanLib.getScannerSize()[0]
 
             # gathering import vairalbe from GUI
+            createOCR = self.createOCRCheckBox.get_active()
+
+            if createOCR == True:
+                self.imageTypeInput.set_active(1)
+
             timeDelay = int(self.delayScale.get_value())
             imageType = self.imageTypeInput.get_active_text().lower()
             resolution = self.resolutionInput.get_active_text()
             outputTypeData = self.outputType.get_active_text()
             scanAreaSelectedIndex = self.scanArea.get_active()
+            rotate = int(self.rotateDataBox.get_active_text())
 
-            # Revceving file location for saving scanned image
-            fileLocation = self.fileName(
-                self.directory, self.scanFileName, imageType, counter)
+            # Receiving file location for saving scanned image
+            fileName = self.fileName(
+                self.directory, self.scanFileName, imageType, self.counter)
+            fileLocation = self.directory + fileName
 
             # Get scanAreaModel
             scanAreaModel = self.scanArea.get_model()
             item = scanAreaModel[scanAreaSelectedIndex]
             # Check whether scan Entire area or Custom
-            if item[1] != "Entire":
+            if item[0] != "Entire":
                 self.log.info('Scanning selected area')
                 inches = item[0].split(' ')
-
                 if float(inches[2]) <= self.scannerSize[2] and float(inches[3]) <= self.scannerSize[2]:
                     self.loadScanLib.setScanArea(
                         inches[0], inches[1], inches[2], inches[3])
@@ -205,13 +218,14 @@ class autoScanner:
             GObject.idle_add(self.statusLabel.set_text, "Scanning...")
             if not self.iter:
                 GObject.idle_add(
-                    self.addRow, [counter, fileLocation, "Scanning..."])
+                    self.addRow, [self.counter, fileLocation, "Scanning..."])
             else:
-                GObject.idle_add(self.addRowData, listStoreCounter, 0, counter)
                 GObject.idle_add(
-                    self.addRowData, listStoreCounter, 1, fileLocation)
+                    self.addRowData, self.listStoreCounter, 0, self.counter)
                 GObject.idle_add(
-                    self.addRowData, listStoreCounter, 2, "Scanning...")
+                    self.addRowData, self.listStoreCounter, 1, fileLocation)
+                GObject.idle_add(
+                    self.addRowData, self.listStoreCounter, 2, "Scanning...")
 
             # setting DPI to scanners
             self.loadScanLib.setDPI(float(resolution))  # DPI
@@ -228,32 +242,65 @@ class autoScanner:
                 outputTypeData.lower())  # bw/gray/color
 
             # Scanning
-            self.log.info('Scanning started ID = %s', counter)
+            self.log.info('Scanning started ID = %s', self.counter)
             PIL = self.loadScanLib.scan()
-            self.log.info('Scanning #%s finished', counter)
+            self.log.info('Scanning #%s finished', self.counter)
             self.loadScanLib.closeScanner()
 
             GObject.idle_add(
-                self.addRowData, listStoreCounter, 2, "Saving Image")
+                self.addRowData, self.listStoreCounter, 2, "Saving Image")
 
             # Saving Image
-            PIL.save(fileLocation)
+            PIL.rotate(int(rotate)).save(fileLocation)
             self.log.info('Scanned Image Saved')
-            del PIL
+            PIL = None
+
+            # Convert text in image to string using python tesseract
+            if createOCR == True:
+                if not os.path.exists(self.directory + "text/"):
+                    os.makedirs(self.directory + "text/")
+
+                # Location where text file will save
+                imageTextLoc = self.directory + "text/" + \
+                    fileName.split(".")[0] + ".txt"
+                GObject.idle_add(
+                    self.addRowData, self.listStoreCounter, 2, "Converting Image to Text")
+                self.log.info("Converting image to text")
+                self.log.info("Text File location: %s", imageTextLoc)
+
+                self.imageToText(fileLocation,imageTextLoc)
+
 
             GObject.idle_add(
-                self.addRowData, listStoreCounter, 2, "Scanning Complete")
+                self.addRowData, self.listStoreCounter, 2, "Scanning Complete")
 
-            counter += 1
-            listStoreCounter += 1
+            self.counter += 1
+            self.listStoreCounter += 1
             if self.pause != True:
                 self.log.info('Time Delay')
                 GObject.idle_add(
-                    self.addRow, [counter, "", "Time Delay " + str(timeDelay) + " second(s)"])
+                    self.addRow, [self.counter, "", "Time Delay " + str(timeDelay) + " second(s)"])
 
                 GObject.idle_add(self.statusLabel.set_text, "Time Delay")
                 time.sleep(timeDelay)  # Time delay between scanning
 
+    def imageToText(self,imageLocation,imageTextLoc):
+        api = tesseract.TessBaseAPI()
+        api.SetOutputName("outputName")
+        api.Init("includes", "eng", tesseract.OEM_DEFAULT)
+        api.SetPageSegMode(tesseract.PSM_AUTO)
+        pixImage = tesseract.pixRead(imageLocation)
+        api.SetImage(pixImage)
+        outText = api.GetUTF8Text()
+        GObject.idle_add(self.addRowData, self.listStoreCounter, 2, "Saving Text to File")
+        
+        textFile = open(imageTextLoc, 'w')
+        textFile.write(str(outText))
+        textFile.close()
+        
+        GObject.idle_add(self.addRowData, self.listStoreCounter, 2, "Text Saved to File")
+        api.End()
+        
     def addRow(self, row):
         """Special function for startScanning.
         Implemented because by appending value it return True which 
@@ -362,7 +409,7 @@ class autoScanner:
                 str(self.fileCounter) + "" + "." + fileExt
             self.fileCounter += 1
 
-        return directory + fullFileName
+        return fullFileName
 
     def pauseFunc(self, button):
         """Trigger when 'Pause' or resume button pressed
@@ -398,34 +445,40 @@ class autoScanner:
         scannerLoadingThread.daemon = True
         scannerLoadingThread.start()
 
+    def ocrCheckBox(self, widget):
+        if widget.get_active() == True:
+            self.dialogBox("File type change to JPG that is important")
+            self.imageTypeInput.set_active(1)
+
     def loadScanner(self):
         """Load Scanner and add them to Scanners combox Box (scannerListBox)
         """
-        
+
         buttonText = self.loadScannerButton.get_label()
         GObject.idle_add(self.loadScannerButton.set_sensitive, False)
-        GObject.idle_add(self.loadScannerButton.set_label, "Loading Scanner(s)...")
+        GObject.idle_add(
+            self.loadScannerButton.set_label, "Loading Scanner(s)...")
 
-        
         self.log.info("Loading Scanner")
         if len(self.scannerList) == 0:
             self.loadScanLib = pyScanLib()
             scanners = self.loadScanLib.getScanners()
 
-            if scanners:    
+            if scanners:
                 self.scannerListBox.remove(0)
                 for scanner in scanners:
-                    self.scannerListBox.append_text(scanner)
+                    GObject.idle_add(self.scannerListBox.append_text, scanner)
                     self.scannerList[scanner] = scanner
-                
+
                 noOfScanner = len(scanners)
                 if noOfScanner > 0:
-                    self.scannerListBox.set_active(0)
-                    
+                    GObject.idle_add(self.scannerListBox.set_active, 0)
+
                 # Selected first scanner available and get its size and save it to self.scannerSize
                 # then close the scanner
                 #
-                # This is needed for 'Custom' window default values (width and height)
+                # This is needed for 'Custom' window default values (width and
+                # height)
                 self.log.info("Receving scanner size")
                 activeScanner = self.scannerListBox.get_active_text()
                 if activeScanner != None:
@@ -436,14 +489,12 @@ class autoScanner:
                     self.log.info("Current Scanner instance destroyed")
                 else:
                     self.log.info("Scanner Size couldn't be received")
-            
+
             else:
                 self.loadScanLib.errorMsg
-        
+
         GObject.idle_add(self.loadScannerButton.set_label, buttonText)
         GObject.idle_add(self.loadScannerButton.set_sensitive, True)
-        
-        
 
     def dialogBox(self, message, explanation=""):
         """Create dailog box and show 'message' given in parameter
@@ -485,6 +536,6 @@ class autoScanner:
         self.dialogBox("Report Issue", "Email: soachishti@outlook.com")
 
 
-GObject.threads_init()
+
 window = autoScanner()
 Gtk.main()
