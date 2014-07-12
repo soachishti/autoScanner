@@ -18,7 +18,8 @@ class autoScanner:
     def __init__(self):
 
         self.log = logging.getLogger('autoScanner')
-        os.remove('includes/autoScanner.log')
+        if os.path.exists('includes/autoScanner.log'):
+            os.remove('includes/autoScanner.log')
         handler = logging.FileHandler('includes/autoScanner.log')
         formatter = logging.Formatter(
             '%(asctime)s %(thread)d %(lineno)d %(levelname)s %(message)s')
