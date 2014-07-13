@@ -4,6 +4,7 @@ import time
 import os
 import threading
 import sys
+import gc
 import logging
 import tesseract
 
@@ -36,6 +37,7 @@ class autoScanner:
         self.imageType = "JPG"
         self.fileCounter = 0
         self.scannerSize = None
+        self.api = False
 
         self.pause = False
 
@@ -284,15 +286,21 @@ class autoScanner:
 
                 GObject.idle_add(self.statusLabel.set_text, "Time Delay")
                 time.sleep(timeDelay)  # Time delay between scanning
-
+                
+            gc.collect()
+                
+                
+                
     def imageToText(self,imageLocation,imageTextLoc):
-        api = tesseract.TessBaseAPI()
-        api.SetOutputName("outputName")
-        api.Init("includes", "eng", tesseract.OEM_DEFAULT)
-        api.SetPageSegMode(tesseract.PSM_AUTO)
+        if not self.api:
+            self.api = tesseract.TessBaseAPI()
+            #self.api.SetOutputName("outputName")
+            self.api.Init("includes", "eng", tesseract.OEM_DEFAULT)
+            self.api.SetPageSegMode(tesseract.PSM_AUTO)
+            
         pixImage = tesseract.pixRead(imageLocation)
-        api.SetImage(pixImage)
-        outText = api.GetUTF8Text()
+        self.api.SetImage(pixImage)
+        outText = self.api.GetUTF8Text()
         GObject.idle_add(self.addRowData, self.listStoreCounter, 2, "Saving Text to File")
         
         textFile = open(imageTextLoc, 'w')
@@ -300,7 +308,8 @@ class autoScanner:
         textFile.close()
         
         GObject.idle_add(self.addRowData, self.listStoreCounter, 2, "Text Saved to File")
-        api.End()
+        #self.api.End()
+        (outText,pixImage) = (None,None)
         
     def addRow(self, row):
         """Special function for startScanning.

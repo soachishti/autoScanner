@@ -17,4 +17,5 @@ Features:
 ----------
 * Auto Scanning
 * Selected Area Scanning
+* Convert Scanned Image to Text (OCR)
 * Multi Platform (Windows, Linux)

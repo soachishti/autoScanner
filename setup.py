@@ -66,7 +66,7 @@ if sys.platform == "win32":
 setup(
     name="autoScanner",
     author="SOAChishti",
-    version="1.0",
+    version="1.1",
     description="GUI of Twain and SANE API with auto scanning.",
     options={'build_exe': {
         'compressed': True,
